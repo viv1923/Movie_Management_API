@@ -18,14 +18,36 @@ namespace Movie_Management_API.Controllers
         }
 
         /// <summary>
-        /// Get all movies from the database.
+        /// Get all movies from the database with pagination.
         /// </summary>
-        /// <returns>List of all movies</returns>
+        /// <param name="pageNumber">Page number (default = 1)</param>
+        /// <param name="pageSize">Number of items per page (default = 10)</param>
+        /// <returns>Paged list of movies</returns>
         [HttpGet("GetAllMovies")]
-        public ActionResult<List<MoviesModel>> GetAllMovies()
+        public ActionResult GetAllMovies(int pageNumber = 1, int pageSize = 10)
         {
-            return Ok(_movieService.GetAllMovies());
+            var movies = _movieService.GetAllMovies();
+
+            if (movies == null || movies.Count == 0)
+                return NotFound("No movies available.");
+
+            var pagedMovies = movies
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var response = new
+            {
+                pageNumber,
+                pageSize,
+                totalRecords = movies.Count,
+                totalPages = (int)Math.Ceiling(movies.Count / (double)pageSize),
+                data = pagedMovies
+            };
+
+            return Ok(response);
         }
+
 
         /// <summary>
         /// Get a movie by its ID.
